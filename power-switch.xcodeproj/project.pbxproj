@@ -10,18 +10,6 @@
 		AC458A552D4686F900EC1EBC /* power-switch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC458A542D4686F900EC1EBC /* power-switch.cpp */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXCopyFilesBuildPhase section */
-		AC458A0A2D452D4C00EC1EBC /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = /usr/share/man/man1/;
-			dstSubfolderSpec = 0;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 1;
-		};
-/* End PBXCopyFilesBuildPhase section */
-
 /* Begin PBXFileReference section */
 		AC458A0C2D452D4C00EC1EBC /* power-switch */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "power-switch"; sourceTree = BUILT_PRODUCTS_DIR; };
 		AC458A282D457C7D00EC1EBC /* license.txt */ = {isa = PBXFileReference; lastKnownFileType = text; name = license.txt; path = "lib/rapidxml-2.0.5/license.txt"; sourceTree = "<group>"; };
@@ -39,9 +27,9 @@
 		AC458A572D468ACE00EC1EBC /* case_insensitive.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = case_insensitive.h; sourceTree = "<group>"; };
 		AC458A582D46935600EC1EBC /* config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
 		AC458A592D46935600EC1EBC /* pdu_types.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pdu_types.h; sourceTree = "<group>"; };
-		AC458A5A2D46942600EC1EBC /* config-tempalte.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "config-tempalte.h"; sourceTree = "<group>"; };
-		AC458A5B2D46946900EC1EBC /* COPYING */ = {isa = PBXFileReference; lastKnownFileType = text; path = COPYING; sourceTree = "<group>"; };
 		AC458A5C2D46946900EC1EBC /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		AC458A5D2D46B09F00EC1EBC /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		AC458A602D46B1F300EC1EBC /* config-template.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "config-template.h"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,9 +46,9 @@
 		AC458A032D452D4C00EC1EBC = {
 			isa = PBXGroup;
 			children = (
-				AC458A5B2D46946900EC1EBC /* COPYING */,
+				AC458A602D46B1F300EC1EBC /* config-template.h */,
+				AC458A5D2D46B09F00EC1EBC /* LICENSE */,
 				AC458A5C2D46946900EC1EBC /* Makefile */,
-				AC458A5A2D46942600EC1EBC /* config-tempalte.h */,
 				AC458A582D46935600EC1EBC /* config.h */,
 				AC458A592D46935600EC1EBC /* pdu_types.h */,
 				AC458A572D468ACE00EC1EBC /* case_insensitive.h */,
@@ -113,7 +101,6 @@
 			buildPhases = (
 				AC458A082D452D4C00EC1EBC /* Sources */,
 				AC458A092D452D4C00EC1EBC /* Frameworks */,
-				AC458A0A2D452D4C00EC1EBC /* CopyFiles */,
 			);
 			buildRules = (
 			);

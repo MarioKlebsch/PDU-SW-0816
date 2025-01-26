@@ -141,7 +141,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="case_insensitive.h" />
-    <ClInclude Include="config-tempalte.h" />
+    <ClInclude Include="config-template.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="http_status_error_category.h" />
     <ClInclude Include="pdu_types.h" />
