@@ -23,9 +23,9 @@
 #include "pdu_types.h"
 #include "case_insensitive.h"
 
-constexpr std::string addr{"<ip addr or hostname>"};
-constexpr std::string user{"<user>"};
-constexpr std::string password{"<password>"};
+const std::string addr{"<ip addr or hostname>"};
+const std::string user{"<user>"};
+const std::string password{"<password>"};
 
 // define channel names
 static const std::map<const char*, channel, case_insensitive> map_channel_name_to_index{
