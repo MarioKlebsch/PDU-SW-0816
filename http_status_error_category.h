@@ -182,37 +182,122 @@ static inline boost::system::error_category& error_category()
                     return "HTTP status code 411 Length Required: "
                     "The request did not specify the length of its content, which is required by the requested resource.";
 
-                case http::status::precondition_failed:                 return "HTTP status code xxx precondition_failed";
-                case http::status::payload_too_large:                   return "HTTP status code xxx payload_too_large";
-                case http::status::uri_too_long:                        return "HTTP status code xxx uri_too_long";
-                case http::status::unsupported_media_type:              return "HTTP status code xxx unsupported_media_type";
-                case http::status::range_not_satisfiable:               return "HTTP status code xxx range_not_satisfiable";
-                case http::status::expectation_failed:                  return "HTTP status code xxx expectation_failed";
-                case http::status::misdirected_request:                 return "HTTP status code xxx misdirected_request";
-                case http::status::unprocessable_entity:                return "HTTP status code xxx unprocessable_entity";
-                case http::status::locked:                              return "HTTP status code xxx locked";
-                case http::status::failed_dependency:                   return "HTTP status code xxx failed_dependency";
-                case http::status::upgrade_required:                    return "HTTP status code xxx upgrade_required";
-                case http::status::precondition_required:               return "HTTP status code xxx precondition_required";
-                case http::status::too_many_requests:                   return "HTTP status code xxx too_many_requests";
-                case http::status::request_header_fields_too_large:     return "HTTP status code xxx request_header_fields_too_large";
-                case http::status::connection_closed_without_response:  return "HTTP status code xxx connection_closed_without_response";
-                case http::status::unavailable_for_legal_reasons:       return "HTTP status code xxx unavailable_for_legal_reasons";
-                case http::status::client_closed_request:               return "HTTP status code xxx client_closed_request";
+                case http::status::precondition_failed:
+                    return "HTTP status code 412 Precondition Failed: "
+                    "The server does not meet one of the preconditions that the requester put on the request header fields.";
 
-                case http::status::internal_server_error:               return "HTTP status code xxx internal_server_error";
-                case http::status::not_implemented:                     return "HTTP status code xxx not_implemented";
-                case http::status::bad_gateway:                         return "HTTP status code xxx bad_gateway";
-                case http::status::service_unavailable:                 return "HTTP status code xxx service_unavailable";
-                case http::status::gateway_timeout:                     return "HTTP status code xxx gateway_timeout";
-                case http::status::http_version_not_supported:          return "HTTP status code xxx http_version_not_supported";
-                case http::status::variant_also_negotiates:             return "HTTP status code xxx variant_also_negotiates";
-                case http::status::insufficient_storage:                return "HTTP status code xxx insufficient_storage";
-                case http::status::loop_detected:                       return "HTTP status code xxx loop_detected";
-                case http::status::not_extended:                        return "HTTP status code xxx not_extended";
-                case http::status::network_authentication_required:     return "HTTP status code xxx network_authentication_required";
-                case http::status::network_connect_timeout_error:       return "HTTP status code xxx network_connect_timeout_error";
-                default:                                                return "???";
+                case http::status::payload_too_large:
+                    return "HTTP status code 413 Payload Too Large: "
+                    "The request is larger than the server is willing or able to process.";
+
+                case http::status::uri_too_long:
+                    return "HTTP status code 414 URI Too Long: "
+                    "The URI provided was too long for the server to process.";
+
+                case http::status::unsupported_media_type:
+                    return "HTTP status code 415 Unsupported Media Type: "
+                    "The request entity has a media type which the server or resource does not support.";
+
+                case http::status::range_not_satisfiable:
+                    return "HTTP status code 416 Range Not Satisfiable: "
+                    "The client has asked for a portion of the file (byte serving), but the server cannot supply that portion. ";
+
+                case http::status::expectation_failed:
+                    return "HTTP status code 417 Expectation Failed: "
+                    "The server cannot meet the requirements of the Expect request-header field.";
+
+                case http::status::misdirected_request:
+                    return "HTTP status code 421 Misdirected Request: "
+                    "The request was directed at a server that is not able to produce a response (for example because of connection reuse).";
+
+                case http::status::unprocessable_entity:
+                    return "HTTP status code 422 Unprocessable Content: "
+                    "The request was well-formed (i.e., syntactically correct) but could not be processed.";
+
+                case http::status::locked:
+                    return "HTTP status code 423 Locked: "
+                    "The resource that is being accessed is locked.";
+
+                case http::status::failed_dependency:
+                    return "HTTP status code 424 Failed Dependency: "
+                    "The request failed because it depended on another request and that request failed (e.g., a PROPPATCH).";
+
+                case http::status::upgrade_required:
+                    return "HTTP status code 426 Upgrade Required: "
+                    "The client should switch to a different protocol such as TLS/1.3, given in the Upgrade header field.";
+
+                case http::status::precondition_required:
+                    return "HTTP status code 428 Precondition Required: "
+                    "The origin server requires the request to be conditional.";
+
+                case http::status::too_many_requests:
+                    return "HTTP status code 429 Too Many Requests: "
+                    "The user has sent too many requests in a given amount of time. ";
+
+                case http::status::request_header_fields_too_large:
+                    return "HTTP status code 431 Request Header Fields Too Large: "
+                    "The server is unwilling to process the request because either an individual header field, or all the header fields collectively, are too large.";
+
+                case http::status::connection_closed_without_response:
+                    return "HTTP status code 444 connection_closed_without_response";
+
+                case http::status::unavailable_for_legal_reasons:
+                    return "HTTP status code 451 Unavailable For Legal Reasons: "
+                    "A server operator has received a legal demand to deny access to a resource or to a set of resources that includes the requested resource.";
+
+                case http::status::client_closed_request:
+                    return "HTTP status code 499 client_closed_request";
+
+                case http::status::internal_server_error:
+                    return "HTTP status code 500 Internal Server Error: "
+                    "A generic error message, given when an unexpected condition was encountered and no more specific message is suitable.";
+
+                case http::status::not_implemented:
+                    return "HTTP status code 501 Not Implemented: "
+                    "The server either does not recognize the request method, or it lacks the ability to fulfil the request. ";
+
+                case http::status::bad_gateway:
+                    return "HTTP status code 502 Bad Gateway: "
+                    "The server was acting as a gateway or proxy and received an invalid response from the upstream server.";
+
+                case http::status::service_unavailable:
+                    return "HTTP status code 503 Service Unavailable: "
+                    "The server cannot handle the request (because it is overloaded or down for maintenance). ";
+
+                case http::status::gateway_timeout:
+                    return "HTTP status code 504 Gateway Timeout: "
+                    "The server was acting as a gateway or proxy and did not receive a timely response from the upstream server.";
+
+                case http::status::http_version_not_supported:
+                    return "HTTP status code 505 HTTP Version Not Supported: "
+                    "The server does not support the HTTP version used in the request.";
+
+                case http::status::variant_also_negotiates:
+                    return "HTTP status code 506 Variant Also Negotiates: "
+                    "Transparent content negotiation for the request results in a circular reference.";
+
+                case http::status::insufficient_storage:
+                    return "HTTP status code 507 Insufficient Storage: "
+                    "The server is unable to store the representation needed to complete the request.";
+
+                case http::status::loop_detected:
+                    return "HTTP status code 508 Loop Detected: "
+                    "The server detected an infinite loop while processing the request (sent instead of 208 Already Reported).";
+
+                case http::status::not_extended:
+                    return "HTTP status code 510 Not Extended: "
+                    "Further extensions to the request are required for the server to fulfil it.";
+
+                case http::status::network_authentication_required:
+                    return "HTTP status code 511 Network Authentication Required: "
+                    "The client needs to authenticate to gain network access.";
+
+                case http::status::network_connect_timeout_error:
+                    return "HTTP status code 599 Network Connect Timeout Error: "
+                    "An error used by some HTTP proxies to signal a network connect timeout behind the proxy to a client in front of the proxy.";
+
+                default:
+                    return "???";
             }
         }
     } instance;
