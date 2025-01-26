@@ -1,0 +1,343 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		AC458A552D4686F900EC1EBC /* power-switch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AC458A542D4686F900EC1EBC /* power-switch.cpp */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		AC458A0A2D452D4C00EC1EBC /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		AC458A0C2D452D4C00EC1EBC /* power-switch */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "power-switch"; sourceTree = BUILT_PRODUCTS_DIR; };
+		AC458A282D457C7D00EC1EBC /* license.txt */ = {isa = PBXFileReference; lastKnownFileType = text; name = license.txt; path = "lib/rapidxml-2.0.5/license.txt"; sourceTree = "<group>"; };
+		AC458A292D457C7D00EC1EBC /* rapidxml.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = rapidxml.hpp; path = "lib/rapidxml-2.0.5/rapidxml.hpp"; sourceTree = "<group>"; };
+		AC458A2A2D457C7D00EC1EBC /* rapidxml_generator.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = rapidxml_generator.hpp; path = "lib/rapidxml-2.0.5/rapidxml_generator.hpp"; sourceTree = "<group>"; };
+		AC458A2B2D457C7D00EC1EBC /* rapidxml_iterators.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = rapidxml_iterators.hpp; path = "lib/rapidxml-2.0.5/rapidxml_iterators.hpp"; sourceTree = "<group>"; };
+		AC458A2C2D457C7D00EC1EBC /* rapidxml_predicates.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = rapidxml_predicates.hpp; path = "lib/rapidxml-2.0.5/rapidxml_predicates.hpp"; sourceTree = "<group>"; };
+		AC458A2D2D457C7D00EC1EBC /* rapidxml_print.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = rapidxml_print.hpp; path = "lib/rapidxml-2.0.5/rapidxml_print.hpp"; sourceTree = "<group>"; };
+		AC458A2E2D457C7D00EC1EBC /* rapidxml_tables.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = rapidxml_tables.hpp; path = "lib/rapidxml-2.0.5/rapidxml_tables.hpp"; sourceTree = "<group>"; };
+		AC458A2F2D457C7D00EC1EBC /* rapidxml_utils.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = rapidxml_utils.hpp; path = "lib/rapidxml-2.0.5/rapidxml_utils.hpp"; sourceTree = "<group>"; };
+		AC458A302D457C7D00EC1EBC /* rapidxml_wrappers.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = rapidxml_wrappers.hpp; path = "lib/rapidxml-2.0.5/rapidxml_wrappers.hpp"; sourceTree = "<group>"; };
+		AC458A312D457C7D00EC1EBC /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = "lib/rapidxml-2.0.5/README.md"; sourceTree = "<group>"; };
+		AC458A542D4686F900EC1EBC /* power-switch.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "power-switch.cpp"; sourceTree = "<group>"; };
+		AC458A562D4688F300EC1EBC /* http_status_error_category.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = http_status_error_category.h; sourceTree = "<group>"; };
+		AC458A572D468ACE00EC1EBC /* case_insensitive.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = case_insensitive.h; sourceTree = "<group>"; };
+		AC458A582D46935600EC1EBC /* config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
+		AC458A592D46935600EC1EBC /* pdu_types.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pdu_types.h; sourceTree = "<group>"; };
+		AC458A5A2D46942600EC1EBC /* config-tempalte.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "config-tempalte.h"; sourceTree = "<group>"; };
+		AC458A5B2D46946900EC1EBC /* COPYING */ = {isa = PBXFileReference; lastKnownFileType = text; path = COPYING; sourceTree = "<group>"; };
+		AC458A5C2D46946900EC1EBC /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		AC458A092D452D4C00EC1EBC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		AC458A032D452D4C00EC1EBC = {
+			isa = PBXGroup;
+			children = (
+				AC458A5B2D46946900EC1EBC /* COPYING */,
+				AC458A5C2D46946900EC1EBC /* Makefile */,
+				AC458A5A2D46942600EC1EBC /* config-tempalte.h */,
+				AC458A582D46935600EC1EBC /* config.h */,
+				AC458A592D46935600EC1EBC /* pdu_types.h */,
+				AC458A572D468ACE00EC1EBC /* case_insensitive.h */,
+				AC458A562D4688F300EC1EBC /* http_status_error_category.h */,
+				AC458A542D4686F900EC1EBC /* power-switch.cpp */,
+				AC458A182D4562C200EC1EBC /* lib */,
+				AC458A0D2D452D4C00EC1EBC /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		AC458A0D2D452D4C00EC1EBC /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				AC458A0C2D452D4C00EC1EBC /* power-switch */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		AC458A182D4562C200EC1EBC /* lib */ = {
+			isa = PBXGroup;
+			children = (
+				AC458A192D4562D300EC1EBC /* rapidxml */,
+			);
+			name = lib;
+			sourceTree = "<group>";
+		};
+		AC458A192D4562D300EC1EBC /* rapidxml */ = {
+			isa = PBXGroup;
+			children = (
+				AC458A282D457C7D00EC1EBC /* license.txt */,
+				AC458A292D457C7D00EC1EBC /* rapidxml.hpp */,
+				AC458A2A2D457C7D00EC1EBC /* rapidxml_generator.hpp */,
+				AC458A2B2D457C7D00EC1EBC /* rapidxml_iterators.hpp */,
+				AC458A2C2D457C7D00EC1EBC /* rapidxml_predicates.hpp */,
+				AC458A2D2D457C7D00EC1EBC /* rapidxml_print.hpp */,
+				AC458A2E2D457C7D00EC1EBC /* rapidxml_tables.hpp */,
+				AC458A2F2D457C7D00EC1EBC /* rapidxml_utils.hpp */,
+				AC458A302D457C7D00EC1EBC /* rapidxml_wrappers.hpp */,
+				AC458A312D457C7D00EC1EBC /* README.md */,
+			);
+			name = rapidxml;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		AC458A0B2D452D4C00EC1EBC /* power-switch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AC458A132D452D4C00EC1EBC /* Build configuration list for PBXNativeTarget "power-switch" */;
+			buildPhases = (
+				AC458A082D452D4C00EC1EBC /* Sources */,
+				AC458A092D452D4C00EC1EBC /* Frameworks */,
+				AC458A0A2D452D4C00EC1EBC /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "power-switch";
+			packageProductDependencies = (
+			);
+			productName = "power-switch";
+			productReference = AC458A0C2D452D4C00EC1EBC /* power-switch */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		AC458A042D452D4C00EC1EBC /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 1620;
+				TargetAttributes = {
+					AC458A0B2D452D4C00EC1EBC = {
+						CreatedOnToolsVersion = 16.2;
+					};
+				};
+			};
+			buildConfigurationList = AC458A072D452D4C00EC1EBC /* Build configuration list for PBXProject "power-switch" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = AC458A032D452D4C00EC1EBC;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = AC458A0D2D452D4C00EC1EBC /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				AC458A0B2D452D4C00EC1EBC /* power-switch */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		AC458A082D452D4C00EC1EBC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AC458A552D4686F900EC1EBC /* power-switch.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		AC458A112D452D4C00EC1EBC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		AC458A122D452D4C00EC1EBC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		AC458A142D452D4C00EC1EBC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_DOCUMENTATION_COMMENTS = NO;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = S3GZ2L8Q2Q;
+				ENABLE_HARDENED_RUNTIME = YES;
+				HEADER_SEARCH_PATHS = (
+					lib/boost,
+					"lib/rapidxml-2.0.5",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		AC458A152D452D4C00EC1EBC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_DOCUMENTATION_COMMENTS = NO;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = S3GZ2L8Q2Q;
+				ENABLE_HARDENED_RUNTIME = YES;
+				HEADER_SEARCH_PATHS = (
+					lib/boost,
+					"lib/rapidxml-2.0.5",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		AC458A072D452D4C00EC1EBC /* Build configuration list for PBXProject "power-switch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AC458A112D452D4C00EC1EBC /* Debug */,
+				AC458A122D452D4C00EC1EBC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AC458A132D452D4C00EC1EBC /* Build configuration list for PBXNativeTarget "power-switch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AC458A142D452D4C00EC1EBC /* Debug */,
+				AC458A152D452D4C00EC1EBC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = AC458A042D452D4C00EC1EBC /* Project object */;
+}
