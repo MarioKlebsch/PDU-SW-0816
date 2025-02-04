@@ -27,8 +27,8 @@ enum op_t { on=0, off=1};
 
 struct szene
 {
-    std::set<channel> on;
     std::set<channel> off;
+    std::set<channel> on;
 };
 
 #endif /* PDU_TYPES_H_ */

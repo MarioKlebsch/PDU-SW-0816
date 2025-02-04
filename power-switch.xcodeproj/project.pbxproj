@@ -46,9 +46,9 @@
 		AC458A032D452D4C00EC1EBC = {
 			isa = PBXGroup;
 			children = (
-				AC458A602D46B1F300EC1EBC /* config-template.h */,
 				AC458A5D2D46B09F00EC1EBC /* LICENSE */,
 				AC458A5C2D46946900EC1EBC /* Makefile */,
+				AC458A602D46B1F300EC1EBC /* config-template.h */,
 				AC458A582D46935600EC1EBC /* config.h */,
 				AC458A592D46935600EC1EBC /* pdu_types.h */,
 				AC458A572D468ACE00EC1EBC /* case_insensitive.h */,

@@ -37,12 +37,27 @@ static const std::map<const char*, channel, case_insensitive> map_channel_name_t
     {"ch6", ch6},
     {"ch7", ch7},
     {"ch8", ch8},
+
+// example with RGB lights, make sure to remove the lines ch1-ch3 above.
+//    {"red",   ch1},
+//    {"green", ch2},
+//    {"blue",  ch3},
 };
 
 // define szene names
 static const std::map<const char*, szene, case_insensitive> szenes {
-    {"szene0", { /*on*/{}, /*off*/{ch1, ch2} }},
-    {"szene1", { /*on*/{ch1}, /*off*/{ch2} }},
-    {"szene2", { /*on*/{ch2}, /*off*/{ch1} }},
+    {"szene0", { /*off*/{ch1, ch2}, /*on*/{} }},
+    {"szene1", { /*off*/{ch2},      /*on*/{ch1} }},
+    {"szene2", { /*off*/{ch1},      /*on*/{ch2} }},
+
+// example for szenes based RGB lights
+//    {"black",    { /*off*/{ch1, ch2, ch3},  /*on*/{             } }},
+//    {"red",      { /*off*/{     ch2, ch3},  /*on*/{ch1          } }},
+//    {"green",    { /*off*/{ch1,      ch3},  /*on*/{     ch2     } }},
+//    {"blue",     { /*off*/{ch1, ch2     },  /*on*/{          ch3} }},
+//    {"cyan",     { /*off*/{ch1          },  /*on*/{     ch2, ch3} }},
+//    {"mangenta", { /*off*/{     ch2     },  /*on*/{ch1,      ch3}} }},
+//    {"yellow",   { /*off*/{          ch3},  /*on*/{ch1, ch2     } }},
+//    {"white",    { /*off*/{             },  /*on*/{ch1, ch2, ch3} }},
 };
 
