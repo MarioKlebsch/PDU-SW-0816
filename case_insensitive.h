@@ -26,12 +26,12 @@
 namespace
 {
 // case-insesitive string compare
-bool iequals(const std::string& a, const std::string& b)
+bool iequals(const std::string_view& lhs, const std::string_view& rhs)
 {
-    return std::equal(a.begin(), a.end(),
-                      b.begin(), b.end(),
-                      [](char a, char b) {
-                          return std::tolower(a) == std::tolower(b);
+    return std::equal(lhs.begin(), lhs.end(),
+                      rhs.begin(), rhs.end(),
+                      [](char lhs, char rhs) {
+                          return std::tolower(lhs) == std::tolower(rhs);
                       });
 }
 
