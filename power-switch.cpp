@@ -20,7 +20,9 @@
 
 #include <algorithm>
 #include <chrono>
+#include <filesystem>
 #include <iostream>
+#include <list>
 #include <map>
 #include <set>
 #include <sstream>
@@ -29,8 +31,10 @@
 #include <boost/archive/iterators/base64_from_binary.hpp>
 #include <boost/archive/iterators/transform_width.hpp>
 #include <boost/archive/iterators/ostream_iterator.hpp>
+#include <boost/asio/deadline_timer.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/ip/v6_only.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/beast/version.hpp>
@@ -60,10 +64,9 @@ static auto all_channels()
 // Parse a channel list. Example: "153" is parsed to a list of ch1, ch3 and ch5
 // Channel list is added to existing channels
 // returns false on invalid input.
-static bool parse_channel_list(const char *list, std::set<channel> &channels)
+static bool parse_channel_list(std::string_view list, std::set<channel> &channels)
 {
-    char ch;
-    while ((ch=*list++))
+    for (const auto ch:list)
     {
         if (ch >='1' && ch <= '8')
             channels.insert(channel(ch-'1'));
@@ -90,6 +93,66 @@ static auto parse_channels(int argc, const char *argv[])
     return ret;
 }
 
+// invert std::map:
+// Create a new map with data of input as keys
+// and keys of input as data.
+template<typename T1, typename T2, typename Cmp>
+static auto invert_map(const std::map<T1, T2, Cmp>&map)
+{
+    std::map<T2,T1> ret;
+    for (const auto &item:map)
+        ret[item.second] = item.first;
+    return ret;
+}
+
+std::ostream& operator<<(std::ostream &s, channel channel)
+{
+    static const auto map_channel_index_to_name=invert_map(map_channel_name_to_index);
+    
+    auto it = map_channel_index_to_name.find(channel);
+    if (it != map_channel_index_to_name.end())
+        s << it->second;
+    return s;
+}
+
+std::ostream& operator<<(std::ostream &s, const std::set<channel>&channels)
+{
+    bool first=true;
+    for (const auto ch:channels)
+    {
+        if (first)
+            first=false;
+        else
+            s << ", ";
+        s << ch;
+    }
+    return s;
+}
+
+std::string to_string(const channel channel)
+{
+    std::ostringstream os;
+    os << channel;
+    return os.str();
+}
+
+std::string to_string(const std::set<channel>&channels)
+{
+    std::ostringstream os;
+    os << channels;
+    return os.str();
+}
+
+std::string to_string(op_t op)
+{
+    switch(op)
+    {
+        case on:  return "on";
+        case off: return "off";
+        default:  return "<unknown>";
+    }
+}
+
 std::string base64_encode(const std::string &s)
 {
     using namespace boost::archive::iterators;
@@ -104,41 +167,38 @@ std::string base64_encode(const std::string &s)
     return os.str()+"=";
 }
 
-// invert std::map:
-// Create a new map with data of input as keys
-// and keys of input as data.
-template<typename T1, typename T2, typename Cmp>
-static auto invert_map(const std::map<T1, T2, Cmp>&map)
-{
-    std::map<T2,T1> ret;
-    for (const auto &item:map)
-        ret[item.second] = item.first;
-    return ret;
-}
-
 using namespace std::string_literals;
+namespace http = boost::beast::http;
 
-static std::string http_get(const std::string &path, boost::system::error_code &ec)
+
+// syncronous http transaction
+http::response<http::string_body>
+http_transaction(http::request<http::string_body> &&request,
+                 http::status                       expected_status,
+                 boost::system::error_code         &ec)
 {
     boost::asio::io_context io_context;
 
-    const auto resolved=boost::asio::ip::tcp::resolver{io_context}.resolve(addr, "80", ec);
+    const auto resolved=boost::asio::ip::tcp::resolver{io_context}.resolve(addr, port,  ec);
     if (ec)
         return {};
 
+    auto it = resolved.begin();
+    while (it != resolved.end() && ! it->endpoint().address().is_v4())
+        it++;
+
+    //    std::cout << "connecting " << it->endpoint().address().to_string() << "\n";
     boost::beast::tcp_stream s{io_context};
-    
-    s.connect(resolved, ec);
+    s.connect(*it, ec);
     if (ec)
         return {};
-    
+
     namespace http = boost::beast::http;
 
-    http::request<http::string_body> req{http::verb::get, path, 11};
-    req.set(http::field::host, addr);
-    req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-    req.set(http::field::authorization, "Basic "s + base64_encode(user + ":" + password) );
-    http::write(s, req, ec);
+    request.set(http::field::host, addr);
+    request.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+    request.set(http::field::authorization, "Basic "s + base64_encode(user + ":" + password) );
+    http::write(s, request, ec);
     if (ec)
         return {};
 
@@ -147,34 +207,485 @@ static std::string http_get(const std::string &path, boost::system::error_code &
     http::read(s, buffer, response, ec);
     if (ec)
         return {};
-    if ((ec=response.result()) != http::status::ok)
-        return {};
 
     s.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
     ec={};
-    
-    return response.body();
+
+    if (response.result() != expected_status)
+    {
+        ec = make_error_code(response.result());
+        return {};
+    }
+
+    return response;
 }
 
-static std::string http_get(const std::string &path, const std::string &query, boost::system::error_code &ec)
+inline http::response<http::string_body>
+http_transaction(http::request<http::string_body> &&request, boost::system::error_code &ec)
 {
-    return http_get(path + "?" + query, ec);
+    return http_transaction(std::move(request), http::status::ok, ec);
 }
 
-int set_switch(op_t op, const std::set<channel> &channels)
+
+// asyncronous http transaction
+template<typename CB>
+void async_http_transaction(boost::asio::io_context           &io_context,
+                            http::request<http::string_body> &&request,
+                            http::status                       expected_status,
+                            const CB                          &cb)
+{
+
+    class http_op: public std::enable_shared_from_this<http_op>
+    {
+        using std::enable_shared_from_this<http_op>::shared_from_this;
+        
+        boost::asio::ip::tcp::resolver    resolver;
+        boost::beast::tcp_stream          s;
+        http::request<http::string_body>  request;
+        CB                                cb;
+        boost::beast::flat_buffer         buffer;
+        http::response<http::string_body> response;
+        http::status                      expected_status;
+
+        http_op()=delete;
+        http_op(const http_op&)=delete;
+        http_op&operator=(const http_op&)=delete;
+
+    public:
+        http_op(boost::asio::io_context &io_context, http::request<http::string_body> &&request, http::status expected_status, const CB &cb):
+            resolver{io_context},
+            s{io_context},
+            request{std::move(request)},
+            expected_status{expected_status},
+            cb{cb}
+        {
+            this->request.set(http::field::host, addr);
+            this->request.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+            this->request.set(http::field::authorization, "Basic "s + base64_encode(user + ":" + password) );
+        }
+
+        void start()
+        {
+            resolver.async_resolve(addr, port, [This=shared_from_this()](auto ec, auto it) {
+                if (ec)
+                {
+                    This->cb(ec, This->response);
+                    return;
+                }
+                const decltype(it) end;
+                while (it != end && ! it->endpoint().address().is_v4())
+                    it++;
+
+                This->connect(it);
+            });
+        }
+
+    private:
+        void connect(const boost::asio::ip::tcp::resolver::iterator& it)
+        {
+//            std::cout << "connecting " << it->endpoint().address().to_string() << "\n";
+            s.async_connect(*it, [This=shared_from_this()](auto ec) {
+                if (ec)
+                {
+                    This->cb(ec, This->response);
+                    return;
+                }
+                This->send();
+            });
+        }
+
+        void send()
+        {
+            http::async_write(s, request, [This=shared_from_this()](auto ec, auto bytes_written) {
+                if (ec)
+                {
+                    This->cb(ec, This->response);
+                    return;
+                }
+                This->receive();
+            } );
+            
+        }
+
+        void receive()
+        {
+            http::async_read(s, buffer, response, [This=shared_from_this()](auto ec, auto bytes_written) {
+                if (ec)
+                    return This->cb(ec, This->response);
+
+                boost::system::error_code e;
+                This->s.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, e);
+                if (This->response.result() != This->expected_status)
+                    This->cb(make_error_code(This->response.result()), This->response);
+
+                This->cb(boost::system::error_code{}, This->response);
+            });
+        }
+    };
+
+    std::make_shared<http_op>(io_context, std::move(request), expected_status, cb)->start();
+}
+
+template<typename CB>
+inline void async_http_transaction(boost::asio::io_context &io_context, http::request<http::string_body> &&request, const CB &cb)
+{
+    return async_http_transaction(io_context, std::move(request), http::status::ok, cb);
+}
+
+//power switch request
+static inline http::request<http::string_body> swith_request(const std::set<channel> &channels, op_t op)
 {
     std::ostringstream os;
+    os << "/control_outlet.htm?";
     for (auto ch:channels)
         os << "outlet" << int(ch) << "=1&";
     os << "op=" << int(op);
+    return {http::verb::get, os.str(), 11};
+}
 
+// status request
+static inline http::request<http::string_body> status_request()
+{
+    return {http::verb::get, "/status.xml", 11};
+};
+
+
+template<typename S>
+static S strip_path_element(S &path)
+{
+    static constexpr char delimiter='/';
+    std::size_t n;
+    while ((n = path.find(delimiter))==0)
+        path = path.substr(1);
+    
+    S ret;
+    if (n == std::string::npos)
+    {
+        ret = path;
+        path={};
+    }
+    else
+    {
+        ret = path.substr(0, n);
+        path = path.substr(n+1);
+        while ((n = path.find(delimiter))==0)
+            path = path.substr(1);
+    }
+    return ret;
+}
+
+#ifdef PROXY_PORT
+int proxy()
+{
+    using tcp=boost::asio::ip::tcp;
+    namespace http=boost::beast::http;
+    using namespace std::string_literals;
+
+    class session: public std::enable_shared_from_this<session>
+    {
+        boost::asio::io_context         &io_context;
+        boost::beast::tcp_stream         s;
+        boost::beast::flat_buffer        buffer;
+        http::request<http::string_body> request;
+        boost::asio::deadline_timer      timer;
+
+    public:
+        explicit session(boost::asio::io_context &io_context, tcp::socket &&s):
+            io_context{io_context},
+            s{std::move(s)},
+            timer{io_context}
+        { }
+        session()=delete;
+        session(const session&)=delete;
+        session &operator=(const session&)=delete;
+        
+        void close()
+        {
+            boost::system::error_code e;
+            s.socket().shutdown(tcp::socket::shutdown_send, e);
+            s.socket().close(e);
+        }
+
+        void start()
+        {
+            request={};
+            boost::beast::http::async_read(s, buffer, request,
+                                           [This=shared_from_this()](auto ec, auto bytes_transferred){
+                if (ec)
+                {
+                    if (ec == http::error::end_of_stream)
+                        This->close();
+                    else if (ec != boost::asio::error::operation_aborted)
+                        std::cerr << "read() failed: " << ec.message() << "\n";
+                    return;
+                }
+                
+                This->process_request();
+            });
+        }
+        
+        void send_response(http::status status, std::string_view content_type, std::string_view msg)
+        {
+            http::response<http::string_body> response{http::status::bad_request, request.version()};
+            response.set(http::field::server, BOOST_BEAST_VERSION_STRING);
+            response.set(http::field::content_type, content_type);
+            response.body() = std::string(msg);
+            response.prepare_payload();
+
+            boost::beast::async_write(s, http::message_generator{std::move(response)},
+                               [This=shared_from_this()](const auto &ec, auto bytes_transferred){
+                if (ec)
+                {
+                    if (ec != boost::asio::error::operation_aborted)
+                        std::cerr << "beast::async_write() failed: " << ec.message() << "\n";
+                    return;
+                }
+                This->close();
+            });
+        }
+
+        void bad_request(std::string_view why)
+        {
+            send_response(http::status::bad_request, "text/plain", why);
+        }
+
+        void not_found()
+        {
+            send_response(http::status::not_found, "text/plain", "not found");
+        }
+        
+        void internal_server_error(std::string_view operation, const boost::system::error_code &ec={})
+        {
+            std::ostringstream os;
+            os << "<html><head><title>internal server error</title></head>"
+               << "<body><h1>internal server error</h1><p>"
+            << operation;
+            if (ec)
+                os << " failed: " << ec.message();
+            os << "</p></body></html>";
+            send_response(http::status::internal_server_error, "text/html", os.str());
+        }
+
+        void show()
+        {
+            async_http_transaction(io_context, status_request(), [This=shared_from_this()](auto ec, auto response) {
+                if (ec)
+                    return This->internal_server_error("http-transaction status", ec);
+
+                rapidxml::xml_document<> doc;
+                try
+                {
+                    doc.parse<0>(response.body());
+                }
+                catch (const std::exception&ex)
+                {
+                    return This->internal_server_error("xml parsing failed: "s + ex.what(), ec);
+                }
+            
+                const auto &root = doc.first_node().value();
+                std::ostringstream os;
+                
+                for (int ch=0; ch<8; ch++)
+                {
+                    auto n = root.first_node("outletStat"s + char('0'+ch));
+                    if (!n.has_value())
+                        continue;
+
+                    static const auto map_channel_index_to_name=invert_map(map_channel_name_to_index);
+
+                    auto it = map_channel_index_to_name.find(channel(ch));
+                    if (it == map_channel_index_to_name.end())
+                        continue;
+                    os << it->second << ": " << n.value().value() << "\n";
+                }
+                return This->send_response(http::status::ok, "text/plain", os.str());
+            });
+        }
+
+        void power_cycle(const std::set<channel> &channels, std::chrono::milliseconds delay)
+        {
+            async_http_transaction(io_context, swith_request(channels, off),
+                                   [This=shared_from_this(), channels, delay](auto ec, auto response){
+                if (ec)
+                    return This->internal_server_error("http-transaction off", ec);
+
+                This->timer.expires_from_now(boost::posix_time::milliseconds(delay.count()));
+                This->timer.async_wait([This, channels](auto ec){
+                    if (ec)
+                        return This->internal_server_error("wait", ec);
+
+                    async_http_transaction(This->io_context, swith_request(channels, on),
+                                           [This, channels](auto ec, auto response){
+                        if (ec)
+                            return This->internal_server_error("http-transaction on", ec);
+
+                        This->send_response(http::status::ok, "text/plain", to_string(channels) + ": power cycled");
+                    });
+                });
+            });
+        }
+
+        void set_channels(const std::set<channel> &channels, op_t op)
+        {
+            async_http_transaction(io_context, swith_request(channels, op),
+                                   [This=shared_from_this(), channels, op](auto ec, auto response){
+                if (ec)
+                    return This->internal_server_error("http-transaction", ec);
+                return This->send_response(http::status::ok, "text/plain", to_string(channels) + ": "+ to_string(op));
+            });
+        }
+
+        void set_channels(const std::set<channel> &channels, std::string_view query)
+        {
+            if (iequals(query, "on"))
+                set_channels(channels, on);
+            else if (iequals(query, "off"))
+                set_channels(channels, off);
+            else if (iequals(query, "cycle"))
+                power_cycle(channels, std::chrono::seconds(5));
+            else
+                return bad_request("request error: illegal request");
+        }
+
+        void set_scene(std::string_view name)
+        {
+            auto it = szenes.find(name);
+            if (it == szenes.end())
+                return not_found();
+            const auto & scene = it->second;
+
+            auto turn_on = [This=shared_from_this(), &scene]() {
+                if (scene.on.empty())
+                    return This->send_response(http::status::ok, "text/plain", "Ok");
+                async_http_transaction(This->io_context, swith_request(scene.on, on),                                            [This](auto ec, auto &response){
+                    if (ec)
+                        return This->internal_server_error("http-transaction on", ec);
+                    This->send_response(http::status::ok, "text/plain", "Ok");
+                });
+            };
+
+            if (scene.off.empty())
+                return turn_on();
+
+            async_http_transaction(io_context, swith_request(scene.off, off),
+                                       [This=shared_from_this(), turn_on=std::move(turn_on)](auto ec, auto &response){
+                if (ec)
+                    return This->internal_server_error("http-transaction off", ec);
+                turn_on();
+            });
+        }
+
+        void process_request()
+        {
+            if (request.method() != http::verb::get)
+            {
+                //todo
+                std::cerr << "bad method\n";
+                return;
+            }
+            
+            const std::string_view target{request.target().data(), request.target().size()};
+            auto n = request.target().find('?');
+            auto query = n==std::string::npos ? "" : request.target().substr(n+1);
+            auto path  = target.substr(0, n);
+
+            if (path.empty())
+                return bad_request("request error: path is empty");
+
+            if (path[0] != '/')
+                return bad_request("request error: path is not absolute");
+            path = path.substr(1); // strip off leading '/';
+
+            if (path=="")
+                return send_response(http::status::ok, "text/html", "<html><body><h1>root</h1></body></html>");
+            else if (iequals(path, "show"))
+                return show();
+            else if (iequals(path, "all"))
+                return set_channels(all_channels(), query);
+
+            auto it = map_channel_name_to_index.find(path);
+            if (it != map_channel_name_to_index.end())
+                return set_channels({it->second}, query);
+
+            auto root = strip_path_element(path);
+            if (iequals(root, "set"))
+                return set_scene(path);
+
+            return not_found();
+        }
+        
+    };
+    
+    boost::asio::io_context io_context;
+    tcp::acceptor acceptor{io_context};
+    tcp::endpoint ep{ boost::asio::ip::make_address("::1"), PROXY_PORT};
     boost::system::error_code ec;
-    auto response = http_get("/control_outlet.htm", os.str(), ec);
+    
+    acceptor.open(ep.protocol(), ec);
+    if (ec)
+    {
+        std::cerr << "open() failed: " << ec.message() << "\n";
+        return -1;
+    }
+
+    if (ep.address().is_v6())
+    {
+        acceptor.set_option(boost::asio::ip::v6_only{false}, ec);
+        if (ec)
+            std::cerr << "set_option(v6_only, true) failed: " << ec.message() << "\n";
+    }
+
+    acceptor.set_option(tcp::acceptor::reuse_address{true}, ec);
+    if (ec)
+        std::cerr << "set_option(reuse_address, true) failed: " << ec.message() << "\n";
+    
+    acceptor.bind(ep, ec);
+    if (ec)
+    {
+        std::cerr << "bind(" << ep.address().to_string() << ", " << ep.port() << ") failed: "
+        << ec.message() << "\n";
+        return -1;
+    }
+    
+    acceptor.listen(tcp::acceptor::max_connections, ec);
+    if (ec)
+    {
+        std::cerr << "listen() failed: " << ec.message() << "\n";
+        return -1;
+    }
+    
+    std::function<void()> accept;
+    accept=[&]() {
+        acceptor.async_accept([&](auto ec, auto &&socket) {
+            if (ec)
+            {
+                if (ec != boost::asio::error::operation_aborted)
+                    std::cerr << "accept() failed: " << ec.message() << "\n";
+                return;
+            }
+            std::make_shared<session>(io_context, std::move(socket))->start();
+            
+            accept();
+        });
+        
+    };
+    
+    accept();
+    io_context.run();
+    return 0;
+}
+#endif /* PROXY_PORT */
+
+int set_switch(const std::set<channel> &channels, op_t op)
+{
+    boost::system::error_code ec;
+    auto response = http_transaction(swith_request(channels, op), ec);
     if (ec)
     {
         std::cerr << "GET /control_outlet.htm failed: " << ec.message() << "\n";
         return -1;
     }
+
     return 0;
 }
 
@@ -190,9 +701,9 @@ int set_szene(int argc, const char *argv[])
             return -1;
         }
         int ret;
-        if (!it->second.off.empty() && (ret=set_switch(off, it->second.off)))
+        if (!it->second.off.empty() && (ret=set_switch(it->second.off, off)))
                 return ret;
-        if (!it->second.on.empty() && (ret=set_switch(on, it->second.on)))
+        if (!it->second.on.empty() && (ret=set_switch(it->second.on, on)))
             return ret;
     }
     return 0;
@@ -201,7 +712,7 @@ int set_szene(int argc, const char *argv[])
 int show(const std::set<channel> &channels)
 {
     boost::system::error_code ec;
-    auto response = http_get("/status.xml", ec);
+    auto response = http_transaction(status_request(), ec);
     if (ec)
     {
         std::cerr << "GET /status.xml failed: " << ec.message() << "\n";
@@ -211,7 +722,7 @@ int show(const std::set<channel> &channels)
     rapidxml::xml_document<> doc;
     try
     {
-        doc.parse<0>(response);
+        doc.parse<0>(response.body());
     }
     catch (const std::exception&ex)
     {
@@ -284,7 +795,9 @@ int usage(const char *name)
     std::cerr << "    " << name << " set   <szene>...    : turn off/on accorting to szene(s)\n";
     std::cerr << "    " << name << " show [<channel>...] : show current switch state of channel(s)\n";
     std::cerr << "    " << name << " info                : show software info\n";
-
+#ifdef PROXY_PORT
+    std::cerr << "    " << name << " proxy               : proxy server on port " << PROXY_PORT << "\n";
+#endif /* PROXY_PORT */
     std::cerr << "\n" << license_info;
     return -1;
 }
@@ -299,24 +812,24 @@ int main(int argc, const char * argv[])
     {
         if (argc == 2)
             return show_channels();
-        return set_switch(on, parse_channels(argc - 2, argv+2));
+        return set_switch(parse_channels(argc - 2, argv+2), on);
     }
     else if (iequals(cmd, "off"))
     {
         if (argc == 2)
             return show_channels();
-        return set_switch(off, parse_channels(argc - 2, argv+2));
+        return set_switch(parse_channels(argc - 2, argv+2), off);
     }
     if (iequals(cmd, "cycle"))
     {
         if (argc == 2)
             return show_channels();
         auto channels = parse_channels(argc - 2, argv+2);
-        auto ret = set_switch(off, channels);
+        auto ret = set_switch(channels, off);
         if (ret)
             return ret;
         std::this_thread::sleep_for(std::chrono::seconds(5));
-        return set_switch(on, channels);
+        return set_switch(channels, on);
     }
     else if (iequals(cmd, "set"))
     {
@@ -330,11 +843,22 @@ int main(int argc, const char * argv[])
             return show(all_channels());
         return show(parse_channels(argc - 2, argv+2));
     }
+#ifdef PROXY_PORT
+    else if (iequals(cmd, "proxy"))
+    {
+        if (argc!=2)
+            return usage(argv[0]);
+        return proxy();
+    }
+#endif /* PROXY_PORT */
     else if (iequals(cmd, "info"))
     {
         std::cout << "control Argus PDU SW-0816\n";
         std::cout << "address: " << addr << "\n";
         std::cout << "user: " << user << "\n";
+#ifdef PROXY_PORT
+        std::cout << "proxy port: " << PROXY_PORT << "\n";
+#endif
         std::cout << "\n";
         std::cout << license_info;
         return 0;
