@@ -54,10 +54,18 @@
       <CommandLineArguments>
          <CommandLineArgument
             argument = "off all"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "on ch1"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "proxy"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "show"
             isEnabled = "NO">
          </CommandLineArgument>
       </CommandLineArguments>
