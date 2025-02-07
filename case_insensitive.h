@@ -26,7 +26,7 @@
 namespace
 {
 // case-insesitive string compare
-bool iequals(const std::string_view& lhs, const std::string_view& rhs)
+bool iequals(std::string_view lhs, std::string_view rhs)
 {
     return std::equal(lhs.begin(), lhs.end(),
                       rhs.begin(), rhs.end(),
@@ -38,20 +38,21 @@ bool iequals(const std::string_view& lhs, const std::string_view& rhs)
 // case insensitive string compare for std::map
 struct case_insensitive
 {
-    bool operator()(const char *lhs, const char *rhs) const
+    bool operator()(std::string_view lhs, std::string_view rhs) const
     {
-        for (;;)
+        auto lhs_it = lhs.begin();
+        auto rhs_it = rhs.begin();
+        while (lhs_it != lhs.end() && rhs_it != rhs.end())
         {
-            const auto ch_lhs = std::tolower(*lhs++);
-            const auto ch_rhs = std::tolower(*rhs++);
-            if (!ch_lhs || !ch_rhs)
-                return !!ch_rhs;
+            const auto ch_lhs = std::tolower(*lhs_it++);
+            const auto ch_rhs = std::tolower(*rhs_it++);
 
             if (ch_lhs < ch_rhs)
                 return true;
             else if (ch_lhs > ch_rhs)
                 return false;
         }
+        return rhs_it != rhs.end();
     }
 };
 }
