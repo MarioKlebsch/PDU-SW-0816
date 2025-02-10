@@ -30,6 +30,8 @@
 		AC458A5C2D46946900EC1EBC /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		AC458A5D2D46B09F00EC1EBC /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		AC458A602D46B1F300EC1EBC /* config-template.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "config-template.h"; sourceTree = "<group>"; };
+		ACCA1D972D5AB8CC008C03EA /* WindowsService.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WindowsService.h; sourceTree = "<group>"; };
+		ACCA1D982D5AB8CC008C03EA /* WindowsService.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = WindowsService.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -46,6 +48,8 @@
 		AC458A032D452D4C00EC1EBC = {
 			isa = PBXGroup;
 			children = (
+				ACCA1D972D5AB8CC008C03EA /* WindowsService.h */,
+				ACCA1D982D5AB8CC008C03EA /* WindowsService.cpp */,
 				AC458A5D2D46B09F00EC1EBC /* LICENSE */,
 				AC458A5C2D46946900EC1EBC /* Makefile */,
 				AC458A602D46B1F300EC1EBC /* config-template.h */,

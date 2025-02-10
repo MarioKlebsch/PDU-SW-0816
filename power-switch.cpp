@@ -851,11 +851,9 @@ int usage(const char* name)
     std::cerr << "    " << name << " info                : show software info\n";
 #ifdef PROXY_PORT
     std::cerr << "    " << name << " proxy               : proxy server on port " << PROXY_PORT << "\n";
-    PowerSwitchService{}.handle_command("", std::string{ name } + " service");
 #ifdef _WIN32
-
-#endif
-
+    PowerSwitchService{}.handle_command("", std::string{ name } + " service");
+#endif /* _WIN32 */
 #endif /* PROXY_PORT */
     std::cerr << "\n" << license_info;
     return -1;
@@ -866,6 +864,8 @@ int main(int argc, const char * argv[])
     if (argc < 2)
         return usage(argv[0]);
     auto cmd = argv[1];
+
+#ifdef _WIN32
     if (iequals(cmd, "service"))
     {
         if (argc < 3)
@@ -873,7 +873,7 @@ int main(int argc, const char * argv[])
 
         return PowerSwitchService{}.handle_command(argv[2], std::string{ argv[0] } + " " + cmd );
     }
-
+#endif /* _WIN32 */
     if (iequals(cmd, "on"))
     {
         if (argc == 2)
