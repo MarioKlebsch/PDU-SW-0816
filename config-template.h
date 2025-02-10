@@ -24,11 +24,14 @@
 #include "case_insensitive.h"
 
 const std::string addr{"<ip addr or hostname>"};
+const std::string port{"80"};
 const std::string user{"<user>"};
 const std::string password{"<password>"};
 
+#define PROXY_PORT 8192
+
 // define channel names
-static const std::map<const char*, channel, case_insensitive> map_channel_name_to_index{
+static const std::map<std::string_view, channel, case_insensitive> map_channel_name_to_index{
     {"ch1", ch1},
     {"ch2", ch2},
     {"ch3", ch3},
@@ -45,7 +48,7 @@ static const std::map<const char*, channel, case_insensitive> map_channel_name_t
 };
 
 // define szene names
-static const std::map<const char*, szene, case_insensitive> szenes {
+static const std::map<std::string_view, szene, case_insensitive> szenes {
     {"szene0", { /*off*/{ch1, ch2}, /*on*/{} }},
     {"szene1", { /*off*/{ch2},      /*on*/{ch1} }},
     {"szene2", { /*off*/{ch1},      /*on*/{ch2} }},

@@ -44,6 +44,10 @@
 #include "http_status_error_category.h"
 #include "rapidxml.hpp"
 
+#ifdef _WIN32
+#include "WindowsService.h"
+#endif
+
 static const char *license_info =
 "Copyright (C) 2025 Mario Klebsch, DG1AM\n"
 "License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>.\n"
@@ -375,30 +379,31 @@ static S strip_path_element(S &path)
 }
 
 #ifdef PROXY_PORT
-int proxy()
+namespace http = boost::beast::http;
+using namespace std::string_literals;
+using tcp = boost::asio::ip::tcp;
+class proxy_server
 {
-    using tcp=boost::asio::ip::tcp;
-    namespace http=boost::beast::http;
-    using namespace std::string_literals;
 
-    class session: public std::enable_shared_from_this<session>
+    class session : public std::enable_shared_from_this<session>
     {
-        boost::asio::io_context         &io_context;
+        boost::asio::io_context& io_context;
         boost::beast::tcp_stream         s;
         boost::beast::flat_buffer        buffer;
         http::request<http::string_body> request;
         boost::asio::deadline_timer      timer;
 
     public:
-        explicit session(boost::asio::io_context &io_context, tcp::socket &&s):
-            io_context{io_context},
-            s{std::move(s)},
-            timer{io_context}
-        { }
-        session()=delete;
-        session(const session&)=delete;
-        session &operator=(const session&)=delete;
-        
+        explicit session(boost::asio::io_context& io_context, tcp::socket&& s) :
+            io_context{ io_context },
+            s{ std::move(s) },
+            timer{ io_context }
+        {
+        }
+        session() = delete;
+        session(const session&) = delete;
+        session& operator=(const session&) = delete;
+
         void close()
         {
             boost::system::error_code e;
@@ -408,40 +413,40 @@ int proxy()
 
         void start()
         {
-            request={};
+            request = {};
             boost::beast::http::async_read(s, buffer, request,
-                                           [This=shared_from_this()](auto ec, auto bytes_transferred){
-                if (ec)
-                {
-                    if (ec == http::error::end_of_stream)
-                        This->close();
-                    else if (ec != boost::asio::error::operation_aborted)
-                        std::cerr << "read() failed: " << ec.message() << "\n";
-                    return;
-                }
-                
-                This->process_request();
-            });
+                [This = shared_from_this()](auto ec, auto bytes_transferred) {
+                    if (ec)
+                    {
+                        if (ec == http::error::end_of_stream)
+                            This->close();
+                        else if (ec != boost::asio::error::operation_aborted)
+                            std::cerr << "read() failed: " << ec.message() << "\n";
+                        return;
+                    }
+
+                    This->process_request();
+                });
         }
-        
+
         void send_response(http::status status, std::string_view content_type, std::string_view msg)
         {
-            http::response<http::string_body> response{http::status::bad_request, request.version()};
+            http::response<http::string_body> response{ http::status::bad_request, request.version() };
             response.set(http::field::server, BOOST_BEAST_VERSION_STRING);
             response.set(http::field::content_type, content_type);
             response.body() = std::string(msg);
             response.prepare_payload();
 
-            boost::beast::async_write(s, http::message_generator{std::move(response)},
-                               [This=shared_from_this()](const auto &ec, auto bytes_transferred){
-                if (ec)
-                {
-                    if (ec != boost::asio::error::operation_aborted)
-                        std::cerr << "beast::async_write() failed: " << ec.message() << "\n";
-                    return;
-                }
-                This->close();
-            });
+            boost::beast::async_write(s, http::message_generator{ std::move(response) },
+                [This = shared_from_this()](const auto& ec, auto bytes_transferred) {
+                    if (ec)
+                    {
+                        if (ec != boost::asio::error::operation_aborted)
+                            std::cerr << "beast::async_write() failed: " << ec.message() << "\n";
+                        return;
+                    }
+                    This->close();
+                });
         }
 
         void bad_request(std::string_view why)
@@ -453,13 +458,13 @@ int proxy()
         {
             send_response(http::status::not_found, "text/plain", "not found");
         }
-        
-        void internal_server_error(std::string_view operation, const boost::system::error_code &ec={})
+
+        void internal_server_error(std::string_view operation, const boost::system::error_code& ec = {})
         {
             std::ostringstream os;
             os << "<html><head><title>internal server error</title></head>"
-               << "<body><h1>internal server error</h1><p>"
-            << operation;
+                << "<body><h1>internal server error</h1><p>"
+                << operation;
             if (ec)
                 os << " failed: " << ec.message();
             os << "</p></body></html>";
@@ -468,7 +473,7 @@ int proxy()
 
         void show()
         {
-            async_http_transaction(io_context, status_request(), [This=shared_from_this()](auto ec, auto response) {
+            async_http_transaction(io_context, status_request(), [This = shared_from_this()](auto ec, auto response) {
                 if (ec)
                     return This->internal_server_error("http-transaction status", ec);
 
@@ -477,21 +482,21 @@ int proxy()
                 {
                     doc.parse<0>(response.body());
                 }
-                catch (const std::exception&ex)
+                catch (const std::exception& ex)
                 {
                     return This->internal_server_error("xml parsing failed: "s + ex.what(), ec);
                 }
-            
-                const auto &root = doc.first_node().value();
+
+                const auto& root = doc.first_node().value();
                 std::ostringstream os;
-                
-                for (int ch=0; ch<8; ch++)
+
+                for (int ch = 0; ch < 8; ch++)
                 {
-                    auto n = root.first_node("outletStat"s + char('0'+ch));
+                    auto n = root.first_node("outletStat"s + char('0' + ch));
                     if (!n.has_value())
                         continue;
 
-                    static const auto map_channel_index_to_name=invert_map(map_channel_name_to_index);
+                    static const auto map_channel_index_to_name = invert_map(map_channel_name_to_index);
 
                     auto it = map_channel_index_to_name.find(channel(ch));
                     if (it == map_channel_index_to_name.end())
@@ -499,43 +504,43 @@ int proxy()
                     os << it->second << ": " << n.value().value() << "\n";
                 }
                 return This->send_response(http::status::ok, "text/plain", os.str());
-            });
+                });
         }
 
-        void power_cycle(const std::set<channel> &channels, std::chrono::milliseconds delay)
+        void power_cycle(const std::set<channel>& channels, std::chrono::milliseconds delay)
         {
             async_http_transaction(io_context, swith_request(channels, off),
-                                   [This=shared_from_this(), channels, delay](auto ec, auto response){
-                if (ec)
-                    return This->internal_server_error("http-transaction off", ec);
-
-                This->timer.expires_from_now(boost::posix_time::milliseconds(delay.count()));
-                This->timer.async_wait([This, channels](auto ec){
+                [This = shared_from_this(), channels, delay](auto ec, auto response) {
                     if (ec)
-                        return This->internal_server_error("wait", ec);
+                        return This->internal_server_error("http-transaction off", ec);
 
-                    async_http_transaction(This->io_context, swith_request(channels, on),
-                                           [This, channels](auto ec, auto response){
+                    This->timer.expires_from_now(boost::posix_time::milliseconds(delay.count()));
+                    This->timer.async_wait([This, channels](auto ec) {
                         if (ec)
-                            return This->internal_server_error("http-transaction on", ec);
+                            return This->internal_server_error("wait", ec);
 
-                        This->send_response(http::status::ok, "text/plain", to_string(channels) + ": power cycled");
-                    });
+                        async_http_transaction(This->io_context, swith_request(channels, on),
+                            [This, channels](auto ec, auto response) {
+                                if (ec)
+                                    return This->internal_server_error("http-transaction on", ec);
+
+                                This->send_response(http::status::ok, "text/plain", to_string(channels) + ": power cycled");
+                            });
+                        });
                 });
-            });
         }
 
-        void set_channels(const std::set<channel> &channels, op_t op)
+        void set_channels(const std::set<channel>& channels, op_t op)
         {
             async_http_transaction(io_context, swith_request(channels, op),
-                                   [This=shared_from_this(), channels, op](auto ec, auto response){
-                if (ec)
-                    return This->internal_server_error("http-transaction", ec);
-                return This->send_response(http::status::ok, "text/plain", to_string(channels) + ": "+ to_string(op));
-            });
+                [This = shared_from_this(), channels, op](auto ec, auto response) {
+                    if (ec)
+                        return This->internal_server_error("http-transaction", ec);
+                    return This->send_response(http::status::ok, "text/plain", to_string(channels) + ": " + to_string(op));
+                });
         }
 
-        void set_channels(const std::set<channel> &channels, std::string_view query)
+        void set_channels(const std::set<channel>& channels, std::string_view query)
         {
             if (iequals(query, "on"))
                 set_channels(channels, on);
@@ -552,27 +557,27 @@ int proxy()
             auto it = szenes.find(name);
             if (it == szenes.end())
                 return not_found();
-            const auto & scene = it->second;
+            const auto& scene = it->second;
 
-            auto turn_on = [This=shared_from_this(), &scene]() {
+            auto turn_on = [This = shared_from_this(), &scene]() {
                 if (scene.on.empty())
                     return This->send_response(http::status::ok, "text/plain", "Ok");
-                async_http_transaction(This->io_context, swith_request(scene.on, on),                                            [This](auto ec, auto &response){
+                async_http_transaction(This->io_context, swith_request(scene.on, on), [This](auto ec, auto& response) {
                     if (ec)
                         return This->internal_server_error("http-transaction on", ec);
                     This->send_response(http::status::ok, "text/plain", "Ok");
-                });
-            };
+                    });
+                };
 
             if (scene.off.empty())
                 return turn_on();
 
             async_http_transaction(io_context, swith_request(scene.off, off),
-                                       [This=shared_from_this(), turn_on=std::move(turn_on)](auto ec, auto &response){
-                if (ec)
-                    return This->internal_server_error("http-transaction off", ec);
-                turn_on();
-            });
+                [This = shared_from_this(), turn_on = std::move(turn_on)](auto ec, auto& response) {
+                    if (ec)
+                        return This->internal_server_error("http-transaction off", ec);
+                    turn_on();
+                });
         }
 
         void process_request()
@@ -583,11 +588,11 @@ int proxy()
                 std::cerr << "bad method\n";
                 return;
             }
-            
-            const std::string_view target{request.target().data(), request.target().size()};
+
+            const std::string_view target{ request.target().data(), request.target().size() };
             auto n = request.target().find('?');
-            auto query = n==std::string::npos ? "" : request.target().substr(n+1);
-            auto path  = target.substr(0, n);
+            auto query = n == std::string::npos ? "" : request.target().substr(n + 1);
+            auto path = target.substr(0, n);
 
             if (path.empty())
                 return bad_request("request error: path is empty");
@@ -596,7 +601,7 @@ int proxy()
                 return bad_request("request error: path is not absolute");
             path = path.substr(1); // strip off leading '/';
 
-            if (path=="")
+            if (path == "")
                 return send_response(http::status::ok, "text/html", "<html><body><h1>root</h1></body></html>");
             else if (iequals(path, "show"))
                 return show();
@@ -605,7 +610,7 @@ int proxy()
 
             auto it = map_channel_name_to_index.find(path);
             if (it != map_channel_name_to_index.end())
-                return set_channels({it->second}, query);
+                return set_channels({ it->second }, query);
 
             auto root = strip_path_element(path);
             if (iequals(root, "set"))
@@ -613,67 +618,81 @@ int proxy()
 
             return not_found();
         }
-        
-    };
-    
-    boost::asio::io_context io_context;
-    tcp::acceptor acceptor{io_context};
-    tcp::endpoint ep{ boost::asio::ip::make_address("::1"), PROXY_PORT};
-    boost::system::error_code ec;
-    
-    acceptor.open(ep.protocol(), ec);
-    if (ec)
-    {
-        std::cerr << "open() failed: " << ec.message() << "\n";
-        return -1;
-    }
 
-    if (ep.address().is_v6())
+    };
+
+    boost::asio::io_context &io_context;
+    tcp::acceptor acceptor{ io_context };
+
+public:
+    proxy_server(boost::asio::io_context &io_context):io_context{ io_context }{}
+
+    int start()
     {
-        acceptor.set_option(boost::asio::ip::v6_only{false}, ec);
+        tcp::endpoint ep{ boost::asio::ip::make_address("::1"), PROXY_PORT };
+        boost::system::error_code ec;
+
+        acceptor.open(ep.protocol(), ec);
         if (ec)
-            std::cerr << "set_option(v6_only, true) failed: " << ec.message() << "\n";
+        {
+            std::cerr << "open() failed: " << ec.message() << "\n";
+            return -1;
+        }
+
+        if (ep.address().is_v6())
+        {
+            acceptor.set_option(boost::asio::ip::v6_only{ false }, ec);
+            if (ec)
+                std::cerr << "set_option(v6_only, true) failed: " << ec.message() << "\n";
+        }
+
+        acceptor.set_option(tcp::acceptor::reuse_address{ true }, ec);
+        if (ec)
+            std::cerr << "set_option(reuse_address, true) failed: " << ec.message() << "\n";
+
+        acceptor.bind(ep, ec);
+        if (ec)
+        {
+            std::cerr << "bind(" << ep.address().to_string() << ", " << ep.port() << ") failed: "
+                << ec.message() << "\n";
+            return -1;
+        }
+
+        acceptor.listen(tcp::acceptor::max_connections, ec);
+        if (ec)
+        {
+            std::cerr << "listen() failed: " << ec.message() << "\n";
+            return -1;
+        }
+
+        std::function<void()> accept;
+        accept = [&]() {
+            acceptor.async_accept([&](auto ec, auto&& socket) {
+                if (ec)
+                {
+                    if (ec != boost::asio::error::operation_aborted)
+                        std::cerr << "accept() failed: " << ec.message() << "\n";
+                    return;
+                }
+                std::make_shared<session>(io_context, std::move(socket))->start();
+
+                accept();
+                });
+
+            };
+
+        accept();
+        return 0;
     }
 
-    acceptor.set_option(tcp::acceptor::reuse_address{true}, ec);
-    if (ec)
-        std::cerr << "set_option(reuse_address, true) failed: " << ec.message() << "\n";
-    
-    acceptor.bind(ep, ec);
-    if (ec)
+    void stop()
     {
-        std::cerr << "bind(" << ep.address().to_string() << ", " << ep.port() << ") failed: "
-        << ec.message() << "\n";
-        return -1;
+        boost::system::error_code ec;
+        acceptor.close(ec);
     }
-    
-    acceptor.listen(tcp::acceptor::max_connections, ec);
-    if (ec)
-    {
-        std::cerr << "listen() failed: " << ec.message() << "\n";
-        return -1;
-    }
-    
-    std::function<void()> accept;
-    accept=[&]() {
-        acceptor.async_accept([&](auto ec, auto &&socket) {
-            if (ec)
-            {
-                if (ec != boost::asio::error::operation_aborted)
-                    std::cerr << "accept() failed: " << ec.message() << "\n";
-                return;
-            }
-            std::make_shared<session>(io_context, std::move(socket))->start();
-            
-            accept();
-        });
-        
-    };
-    
-    accept();
-    io_context.run();
-    return 0;
-}
+
+};
+
 #endif /* PROXY_PORT */
 
 int set_switch(const std::set<channel> &channels, op_t op)
@@ -697,7 +716,7 @@ int set_szene(int argc, const char *argv[])
         auto it = szenes.find(szene);
         if (it == szenes.end())
         {
-            std::cerr << "unknown szene: " << szene << "\n";
+            std::cerr << "unknown scene: " << szene << "\n";
             return -1;
         }
         int ret;
@@ -779,14 +798,49 @@ int show_szenes()
     return 0;
 }
 
-int usage(const char *name)
+
+#ifdef PROXY_PORT
+#ifdef _WIN32
+class PowerSwitchService : public windows::service
 {
-    auto p=strrchr(name, '/');
+    boost::asio::io_context io_context;
+    proxy_server            proxy{ io_context };
+
+    std::string name()         const override { return "PowerSwitchProxy"; };
+    std::string display_name() const override { return "PDU SW-0816 power switch proxy service"; }
+    std::string arguments()    const override { return "service"; };
+
+    int init() override
+    {
+        return proxy.start();
+    }
+
+    int mainloop() override
+    {
+        io_context.run();
+        return 0;
+    }
+
+    void stop() override
+    {
+        proxy.stop();
+    }
+
+public:
+    PowerSwitchService() = default;
+};
+
+#endif /* _WIN32 */
+#endif /* PROXY_PORT */
+
+int usage(const char* name)
+{
+    auto p = strrchr(name, '/');
     if (p)
-        name=p+1;
-    p=strrchr(name, '\\');
+        name = p + 1;
+    p = strrchr(name, '\\');
     if (p)
-        name=p+1;
+        name = p + 1;
 
     std::cerr << "usage:\n";
     std::cerr << "    " << name << " on    <channel>...  : turn on channel(s)\n";
@@ -797,6 +851,11 @@ int usage(const char *name)
     std::cerr << "    " << name << " info                : show software info\n";
 #ifdef PROXY_PORT
     std::cerr << "    " << name << " proxy               : proxy server on port " << PROXY_PORT << "\n";
+    PowerSwitchService{}.handle_command("", std::string{ name } + " service");
+#ifdef _WIN32
+
+#endif
+
 #endif /* PROXY_PORT */
     std::cerr << "\n" << license_info;
     return -1;
@@ -806,7 +865,14 @@ int main(int argc, const char * argv[])
 {
     if (argc < 2)
         return usage(argv[0]);
-    auto cmd=argv[1];
+    auto cmd = argv[1];
+    if (iequals(cmd, "service"))
+    {
+        if (argc < 3)
+            return usage(argv[0]);
+
+        return PowerSwitchService{}.handle_command(argv[2], std::string{ argv[0] } + " " + cmd );
+    }
 
     if (iequals(cmd, "on"))
     {
@@ -848,7 +914,14 @@ int main(int argc, const char * argv[])
     {
         if (argc!=2)
             return usage(argv[0]);
-        return proxy();
+
+        boost::asio::io_context io_context;
+        proxy_server proxy{ io_context };
+        auto ret = proxy.start();
+        if (ret)
+            return ret;
+        io_context.run();
+        return 0;
     }
 #endif /* PROXY_PORT */
     else if (iequals(cmd, "info"))

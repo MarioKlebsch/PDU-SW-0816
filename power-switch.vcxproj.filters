@@ -2,6 +2,7 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="power-switch.cpp" />
+    <ClCompile Include="WindowsService.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="case_insensitive.h" />
@@ -9,6 +10,7 @@
     <ClInclude Include="config-template.h" />
     <ClInclude Include="http_status_error_category.h" />
     <ClInclude Include="pdu_types.h" />
+    <ClInclude Include="WindowsService.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="LICENSE" />
