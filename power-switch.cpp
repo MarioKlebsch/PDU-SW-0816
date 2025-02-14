@@ -353,6 +353,39 @@ static inline http::request<http::string_body> status_request()
     return {http::verb::get, "/status.xml", 11};
 };
 
+struct channel_status
+{
+    channel          channel;
+    std::string_view name;
+    bool             state;
+};
+
+// status response
+static std::list<const channel_status> parse_status_response(const http::response<http::string_body> &response)
+{
+    rapidxml::xml_document<> doc;
+    doc.parse<0>(response.body());
+
+    std::list<const channel_status> ret;
+    
+    const auto& root = doc.first_node().value();
+    std::ostringstream os;
+
+    for (int ch = 0; ch < 8; ch++)
+    {
+        auto n = root.first_node("outletStat"s + char('0' + ch));
+        if (!n.has_value())
+            continue;
+
+        static const auto map_channel_index_to_name = invert_map(map_channel_name_to_index);
+
+        auto it = map_channel_index_to_name.find(channel(ch));
+        if (it == map_channel_index_to_name.end())
+            continue;
+        ret.emplace_back(channel(ch), it->second, iequals(n.value().value(), "on"));
+    }
+    return ret;
+}
 
 template<typename S>
 static S strip_path_element(S &path)
@@ -431,7 +464,7 @@ class proxy_server
 
         void send_response(http::status status, std::string_view content_type, std::string_view msg)
         {
-            http::response<http::string_body> response{ http::status::bad_request, request.version() };
+            http::response<http::string_body> response{ status, request.version() };
             response.set(http::field::server, BOOST_BEAST_VERSION_STRING);
             response.set(http::field::content_type, content_type);
             response.body() = std::string(msg);
@@ -471,39 +504,134 @@ class proxy_server
             send_response(http::status::internal_server_error, "text/html", os.str());
         }
 
+        void root_document()
+        {
+            async_http_transaction(io_context, status_request(), [This = shared_from_this()](auto ec, auto response) {
+                if (ec)
+                    return This->internal_server_error("http-transaction status", ec);
+
+                try
+                {
+                    auto switch_states = parse_status_response(response);
+                    std::ostringstream os;
+                    os << R"---(
+<html>
+    <head>
+        <title>power switch</title>
+        <style>
+.on {
+  background-color: Chartreuse;
+}
+.off {
+}
+.state {
+  text-align: center;
+}
+table, th, td {
+  border: 1px solid;
+  border-collapse: collapse;
+}
+#overlay.dim {
+  display:inline;
+}
+#overlay {
+  background-color: rgba(0,0,0,0.2);
+  display:none;
+  position:fixed;
+  left:0;
+  top: 0;
+  width:100%;
+  height:100%;
+}
+        </style>
+        <script>
+
+function set_switch(request)
+{
+  // din window when operation is in progress
+  document.getElementById('overlay').classList.add('dim');
+
+  const xhr = new XMLHttpRequest();
+  xhr.open("GET", "/" + request, true);
+  xhr.onload = (e) => {
+    if (xhr.readyState === 4) {
+      if (xhr.status === 200) {
+//        console.log(xhr.responseText);
+      } else {
+        console.error(xhr.statusText);
+      }
+      location.reload();
+    }
+  };
+  xhr.onerror = (e) => {
+    console.error(xhr.statusText);
+    location.reload();
+  };
+  xhr.send(null);
+}
+
+        </script>
+    </head>
+    <body>
+        <h1>power switch</h1>
+        <h2>Scenes:</h2>
+        <ul>
+)---";
+                    for (const auto &scene: szenes)
+                        os << "<li><button onclick='set_switch(\"set/" << scene.first <<"\")'>" << scene.first << "</button></li>\n";
+                    os << R"---(
+        </ul>
+
+        <h2>Channels:</h2>
+        <table>
+            <tr><th>channel</th><th>state</th><th colspan='2'>command</th></tr>
+)---";
+                    for(const auto &state:switch_states)
+                    {
+                        os << "<tr class='" << state.name << "'>";
+                        os << "<td class='channel'>" << state.name << "</td>";
+                        os << "<td class='state " << (state.state ? "on" : "off") << "'>" << (state.state ? "on" : "off") << "</td>";
+                        
+                        os << "<td class='off_button'><button onclick='set_switch(\"" << state.name <<"?off\")'>off</button></td>";
+                        os << "<td class='on_button'><button onclick='set_switch(\"" << state.name <<"?on\")'>on</button></td>";
+                        
+                        os << "</tr>\n";
+                    }
+                    os << R"---(
+        </table>
+        <div id='overlay'/>
+    </body>
+</html>
+)---";
+
+                    return This->send_response(http::status::ok, "text/html", os.str());
+                }
+                catch (const std::exception& ex)
+                {
+                    return This->internal_server_error("xml parsing failed: "s + ex.what(), ec);
+                }
+                });
+        }
+
         void show()
         {
             async_http_transaction(io_context, status_request(), [This = shared_from_this()](auto ec, auto response) {
                 if (ec)
                     return This->internal_server_error("http-transaction status", ec);
 
-                rapidxml::xml_document<> doc;
                 try
                 {
-                    doc.parse<0>(response.body());
+                    auto switch_states = parse_status_response(response);
+                    std::ostringstream os;
+                    for(const auto &state:switch_states)
+                        os << state.name << ": " << (state.state ? "on"s : "off"s) << "\n";
+
+                    return This->send_response(http::status::ok, "text/plain", os.str());
                 }
                 catch (const std::exception& ex)
                 {
                     return This->internal_server_error("xml parsing failed: "s + ex.what(), ec);
                 }
-
-                const auto& root = doc.first_node().value();
-                std::ostringstream os;
-
-                for (int ch = 0; ch < 8; ch++)
-                {
-                    auto n = root.first_node("outletStat"s + char('0' + ch));
-                    if (!n.has_value())
-                        continue;
-
-                    static const auto map_channel_index_to_name = invert_map(map_channel_name_to_index);
-
-                    auto it = map_channel_index_to_name.find(channel(ch));
-                    if (it == map_channel_index_to_name.end())
-                        continue;
-                    os << it->second << ": " << n.value().value() << "\n";
-                }
-                return This->send_response(http::status::ok, "text/plain", os.str());
                 });
         }
 
@@ -602,7 +730,7 @@ class proxy_server
             path = path.substr(1); // strip off leading '/';
 
             if (path == "")
-                return send_response(http::status::ok, "text/html", "<html><body><h1>root</h1></body></html>");
+                return root_document();
             else if (iequals(path, "show"))
                 return show();
             else if (iequals(path, "all"))
@@ -623,6 +751,20 @@ class proxy_server
 
     boost::asio::io_context &io_context;
     tcp::acceptor acceptor{ io_context };
+
+    void accept()
+    {
+        acceptor.async_accept([this](auto ec, auto&& socket) {
+            if (ec)
+            {
+                if (ec != boost::asio::error::operation_aborted)
+                    std::cerr << "accept() failed: " << ec.message() << "\n";
+                return;
+            }
+            std::make_shared<session>(io_context, std::move(socket))->start();
+            accept();
+        });
+    }
 
 public:
     proxy_server(boost::asio::io_context &io_context):io_context{ io_context }{}
@@ -664,22 +806,6 @@ public:
             std::cerr << "listen() failed: " << ec.message() << "\n";
             return -1;
         }
-
-        std::function<void()> accept;
-        accept = [&]() {
-            acceptor.async_accept([&](auto ec, auto&& socket) {
-                if (ec)
-                {
-                    if (ec != boost::asio::error::operation_aborted)
-                        std::cerr << "accept() failed: " << ec.message() << "\n";
-                    return;
-                }
-                std::make_shared<session>(io_context, std::move(socket))->start();
-
-                accept();
-                });
-
-            };
 
         accept();
         return 0;
@@ -737,33 +863,18 @@ int show(const std::set<channel> &channels)
         std::cerr << "GET /status.xml failed: " << ec.message() << "\n";
         return -1;
     }
-
-    rapidxml::xml_document<> doc;
     try
     {
-        doc.parse<0>(response.body());
+        auto switch_states = parse_status_response(response);
+        for(const auto &state:switch_states)
+            std::cout << state.name << ": " << (state.state ? "on"s : "off"s) << "\n";
+        return 0;
     }
-    catch (const std::exception&ex)
+    catch (const std::exception& ex)
     {
         std::cerr << "XML parsing failed: " << ex.what() << "\n";
         return -1;
     }
-    
-    const auto &root = doc.first_node().value();
-    for (auto ch:channels)
-    {
-        auto n = root.first_node("outletStat"s + char('0'+int(ch)));
-        if (!n.has_value())
-            continue;
-
-        static const auto map_channel_index_to_name=invert_map(map_channel_name_to_index);
-
-        auto it = map_channel_index_to_name.find(ch);
-        if (it == map_channel_index_to_name.end())
-            continue;
-        std::cout << it->second << ": " << n.value().value() << "\n";
-    }
-    return 0;
 }
 
 int show_channels()
