@@ -361,12 +361,12 @@ struct channel_status
 };
 
 // status response
-static std::list<const channel_status> parse_status_response(const http::response<http::string_body> &response)
+static std::list<channel_status> parse_status_response(const http::response<http::string_body> &response)
 {
     rapidxml::xml_document<> doc;
     doc.parse<0>(response.body());
 
-    std::list<const channel_status> ret;
+    std::list<channel_status> ret;
     
     const auto& root = doc.first_node().value();
     std::ostringstream os;
