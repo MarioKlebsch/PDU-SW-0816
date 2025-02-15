@@ -518,6 +518,7 @@ class proxy_server
 <html>
     <head>
         <title>power switch</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
 .on {
   background-color: Chartreuse;
