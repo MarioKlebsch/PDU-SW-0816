@@ -29,7 +29,7 @@ const std::string user{"<user>"};
 const std::string password{"<password>"};
 
 #define PROXY_BIND_PORT 8192
-#define PROXY_BIND_ADDR "localhost"
+#define PROXY_BIND_ADDR "::1"
 
 // define channel names
 static const std::map<std::string_view, channel, case_insensitive> map_channel_name_to_index{
