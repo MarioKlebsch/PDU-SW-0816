@@ -534,6 +534,7 @@ table, th, td {
 #overlay.dim {
   display:inline;
 }
+
 #overlay {
   background-color: rgba(0,0,0,0.2);
   display:none;
@@ -574,6 +575,7 @@ function set_switch(request)
     </head>
     <body>
         <h1>power switch</h1>
+
         <h2>Scenes:</h2>
         <ul>
 )---";
@@ -598,8 +600,18 @@ function set_switch(request)
                         os << "</tr>\n";
                     }
                     os << R"---(
+            <tr>
+                <td>all</td>
+                <td/>
+                <td class='off_button'><button onclick='set_switch("all?off")'>off</button></td>
+                <td class='on_button' >
+                    <!-- <button onclick='set_switch("all?on")' >on</button> -->
+                </td>
+            </tr>
         </table>
+
         <div id='overlay'/>
+
     </body>
 </html>
 )---";
