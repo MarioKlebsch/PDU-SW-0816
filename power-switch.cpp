@@ -577,7 +577,7 @@ function set_switch(request)
         <h2>Scenes:</h2>
         <ul>
 )---";
-                    for (const auto &scene: szenes)
+                    for (const auto &scene: scenes)
                         os << "<li><button onclick='set_switch(\"set/" << scene.first <<"\")'>" << scene.first << "</button></li>\n";
                     os << R"---(
         </ul>
@@ -682,8 +682,8 @@ function set_switch(request)
 
         void set_scene(std::string_view name)
         {
-            auto it = szenes.find(name);
-            if (it == szenes.end())
+            auto it = scenes.find(name);
+            if (it == scenes.end())
                 return not_found();
             const auto& scene = it->second;
 
@@ -834,15 +834,15 @@ int set_switch(const std::set<channel> &channels, op_t op)
     return 0;
 }
 
-int set_szene(int argc, const char *argv[])
+int set_scene(int argc, const char *argv[])
 {
     for (int i=0; i<argc; i++)
     {
-        auto szene = argv[i];
-        auto it = szenes.find(szene);
-        if (it == szenes.end())
+        auto scene = argv[i];
+        auto it = scenes.find(scene);
+        if (it == scenes.end())
         {
-            std::cerr << "unknown scene: " << szene << "\n";
+            std::cerr << "unknown scene: " << scene << "\n";
             return -1;
         }
         int ret;
@@ -886,10 +886,10 @@ int show_channels()
     return 0;
 }
 
-int show_szenes()
+int show_scenes()
 {
-    std::cout << "Available szenes:\n";
-    for (const auto &item:szenes)
+    std::cout << "Available scenes:\n";
+    for (const auto &item:scenes)
     {
         std::cout << "- " << item.first;
         if (!item.second.off.empty())
@@ -957,7 +957,7 @@ int usage(const char* name)
     std::cerr << "    " << name << " on    <channel>...  : turn on channel(s)\n";
     std::cerr << "    " << name << " off   <channel>...  : turn off channel(s)\n";
     std::cerr << "    " << name << " cycle <channel>...  : power cycle channel(s), 5s off\n";
-    std::cerr << "    " << name << " set   <szene>...    : turn off/on accorting to szene(s)\n";
+    std::cerr << "    " << name << " set   <scene>...    : turn off/on accorting to scene(s)\n";
     std::cerr << "    " << name << " show [<channel>...] : show current switch state of channel(s)\n";
     std::cerr << "    " << name << " info                : show software info\n";
 #ifdef PROXY_PORT
@@ -1011,8 +1011,8 @@ int main(int argc, const char * argv[])
     else if (iequals(cmd, "set"))
     {
         if (argc == 2)
-            return show_szenes();
-        return set_szene(argc-2, argv+2);
+            return show_scenes();
+        return set_scene(argc-2, argv+2);
     }
     else if (iequals(cmd, "show"))
     {

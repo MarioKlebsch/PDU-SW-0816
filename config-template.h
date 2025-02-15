@@ -47,13 +47,13 @@ static const std::map<std::string_view, channel, case_insensitive> map_channel_n
 //    {"blue",  ch3},
 };
 
-// define szene names
-static const std::map<std::string_view, szene, case_insensitive> szenes {
-    {"szene0", { /*off*/{ch1, ch2}, /*on*/{} }},
-    {"szene1", { /*off*/{ch2},      /*on*/{ch1} }},
-    {"szene2", { /*off*/{ch1},      /*on*/{ch2} }},
+// define scene names
+static const std::map<std::string_view, scene, case_insensitive> scenes {
+    {"scene0", { /*off*/{ch1, ch2}, /*on*/{} }},
+    {"scene1", { /*off*/{ch2},      /*on*/{ch1} }},
+    {"scene2", { /*off*/{ch1},      /*on*/{ch2} }},
 
-// example for szenes based RGB lights
+// example for scenes based RGB lights
 //    {"black",    { /*off*/{ch1, ch2, ch3},  /*on*/{             } }},
 //    {"red",      { /*off*/{     ch2, ch3},  /*on*/{ch1          } }},
 //    {"green",    { /*off*/{ch1,      ch3},  /*on*/{     ch2     } }},

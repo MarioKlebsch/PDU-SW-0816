@@ -25,7 +25,7 @@ enum channel { ch1=0, ch2, ch3, ch4, ch5, ch6, ch7, ch8};
 
 enum op_t { on=0, off=1};
 
-struct szene
+struct scene
 {
     std::set<channel> off;
     std::set<channel> on;
