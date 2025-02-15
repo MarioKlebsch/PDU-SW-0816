@@ -411,7 +411,7 @@ static S strip_path_element(S &path)
     return ret;
 }
 
-#ifdef PROXY_PORT
+#ifdef PROXY_BIND_PORT
 namespace http = boost::beast::http;
 using namespace std::string_literals;
 using tcp = boost::asio::ip::tcp;
@@ -771,7 +771,13 @@ public:
 
     int start()
     {
-        tcp::endpoint ep{ boost::asio::ip::make_address("::1"), PROXY_PORT };
+        tcp::endpoint ep{
+#ifdef PROXY_BIND_ADDR
+            boost::asio::ip::make_address(PROXY_BIND_ADDR),
+#else
+            boost::asio::ip::tcp::v4(),
+#endif
+            PROXY_BIND_PORT };
         boost::system::error_code ec;
 
         acceptor.open(ep.protocol(), ec);
@@ -910,7 +916,7 @@ int show_scenes()
 }
 
 
-#ifdef PROXY_PORT
+#ifdef PROXY_BIND_PORT
 #ifdef _WIN32
 class PowerSwitchService : public windows::service
 {
@@ -960,12 +966,16 @@ int usage(const char* name)
     std::cerr << "    " << name << " set   <scene>...    : turn off/on accorting to scene(s)\n";
     std::cerr << "    " << name << " show [<channel>...] : show current switch state of channel(s)\n";
     std::cerr << "    " << name << " info                : show software info\n";
-#ifdef PROXY_PORT
-    std::cerr << "    " << name << " proxy               : proxy server on port " << PROXY_PORT << "\n";
+#ifdef PROXY_BIND_PORT
+#ifdef PROXY_BIND_ADDR
+    std::cerr << "    " << name << " proxy               : proxy server on " << PROXY_BIND_ADDR << " port " << PROXY_BIND_PORT << "\n";
+#else
+    std::cerr << "    " << name << " proxy               : proxy server on port " << PROXY_BIND_PORT << "\n";
+#endif
 #ifdef _WIN32
     PowerSwitchService{}.handle_command("", std::string{ name } + " service");
 #endif /* _WIN32 */
-#endif /* PROXY_PORT */
+#endif /* PROXY_BIND_PORT */
     std::cerr << "\n" << license_info;
     return -1;
 }
@@ -1020,7 +1030,7 @@ int main(int argc, const char * argv[])
             return show(all_channels());
         return show(parse_channels(argc - 2, argv+2));
     }
-#ifdef PROXY_PORT
+#ifdef PROXY_BIND_PORT
     else if (iequals(cmd, "proxy"))
     {
         if (argc!=2)
@@ -1040,8 +1050,12 @@ int main(int argc, const char * argv[])
         std::cout << "control Argus PDU SW-0816\n";
         std::cout << "address: " << addr << "\n";
         std::cout << "user: " << user << "\n";
-#ifdef PROXY_PORT
-        std::cout << "proxy port: " << PROXY_PORT << "\n";
+#ifdef PROXY_BIND_PORT
+#ifdef PROXY_BIND_ADDR
+        std::cout << "proxy: " << PROXY_BIND_ADDR << " port " << PROXY_BIND_PORT << "\n";
+#else
+        std::cout << "proxy: port " << PROXY_BIND_PORT << "\n";
+#endif
 #endif
         std::cout << "\n";
         std::cout << license_info;
